@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register - Donor Portal</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #e8f5e9;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #2e7d32;
+      color: white;
+      padding: 25px;
+      text-align: center;
+      font-size: 32px;
+      font-weight: 700;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 25px;
+    }
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #333;
+    }
+    form div {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #555;
+    }
+    input[type="text"], input[type="number"], select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      box-sizing: border-box;
+      transition: border-color 0.3s;
+    }
+    input:focus, select:focus {
+      border-color: #2e7d32;
+      outline: none;
+      box-shadow: 0 0 5px rgba(46, 125, 50, 0.3);
+    }
+    button[type="submit"] {
+      width: 100%;
+      padding: 15px;
+      background: #2e7d32;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+    button[type="submit"]:hover {
+      background: #1b5e20;
+    }
+  </style>
+</head>
+<body>
+  <header>💉 Donor Registration Portal</header>
+
+  <div class="container">
+    <a href="index.html" style="text-decoration: none; color: #555; display: block; margin-bottom: 20px; font-weight: bold;">← Back to Role Selection</a>
+
+    <div class="card">
+      <form id="donorForm">
+        <h2>Donor Details</h2>
+        <div><label for="donor-name">Name</label><input type="text" id="donor-name" required /></div>
+        <div><label for="donor-age">Age</label><input type="number" id="donor-age" required min="18" max="65"/></div>
+        <div>
+          <label for="donor-bloodGroup">Blood Group</label>
+          <select id="donor-bloodGroup" required>
+            <option value="">Select...</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+            <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
+          </select>
+        </div>
+        <div><label for="donor-city">City</label><input type="text" id="donor-city" required /></div>
+        <div><label for="bags-available">Units Available (Bags)</label><input type="number" id="bags-available" required min="1" value="1" /></div>
+        <button id="donor-submitBtn" type="submit">Register as Donor</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE_URL = 'http://localhost:8080/api/v1/blood'; 
+
+    // --- DONOR SUBMISSION (FETCH POST) ---
+    document.getElementById('donorForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const bloodGroup = document.getElementById('donor-bloodGroup').value;
+      const bagsAvailable = document.getElementById('bags-available').value;
+      
+      const donorDetails = {
+        name: document.getElementById('donor-name').value,
+        age: parseInt(document.getElementById('donor-age').value),
+        city: document.getElementById('donor-city').value,
+      };
+
+      try {
+        // FIX APPLIED HERE: encodeURIComponent ensures A+ is sent as A%2B
+        const encodedBloodGroup = encodeURIComponent(bloodGroup);
+        const url = `${API_BASE_URL}/donor?bloodGroup=${encodedBloodGroup}&bags=${bagsAvailable}`;
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(donorDetails)
+        });
+
+        const result = await response.json();
+        
+        if (response.ok) {
+          alert(`✅ Success! ${bloodGroup} donation of ${bagsAvailable} units registered. Current stock: ${result.unitsAvailable}`);
+          document.getElementById('donorForm').reset();
+        } else {
+          alert(`🛑 Error (HTTP ${response.status}): ${result.message || 'Registration failed.'}`);
+        }
+      } catch (error) {
+        console.error('Donor Submission Error:', error);
+        alert('Failed to connect to the server or process request.');
+      }
+    });
+  </script>
+</body>
+</html>
